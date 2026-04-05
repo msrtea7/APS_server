@@ -14,7 +14,7 @@ import json
 from typing import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 import logging
-from config import AVEVA_MODEL_TYPES
+from src.config import AVEVA_MODEL_TYPES
 
 # Import required .NET types
 import System

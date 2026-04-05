@@ -2,7 +2,7 @@
 
 from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, Field
-from config import DEFAULT_TIMEOUT
+from src.config import DEFAULT_TIMEOUT
 
 
 # ---------------------------------------------------------------------------

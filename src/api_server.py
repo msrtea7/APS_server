@@ -9,9 +9,9 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-import aveva_tools
-from config import HOST, PORT
-from schemas import (
+from src import aveva_tools
+from src.config import HOST, PORT
+from src.schemas import (
     # Simulation
     CreateSimulationArgs,
     OpenSimulationArgs,
