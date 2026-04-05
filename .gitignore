@@ -51,11 +51,6 @@ Temporary Items
 
 ### VisualStudioCode ###
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
@@ -93,5 +88,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+
+__pycache__/
+*.py[cod]
+*.pyo
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,visualstudiocode
