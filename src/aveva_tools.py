@@ -9,6 +9,7 @@ import clr
 
 clr.AddReference("System")
 import System
+import time
 import os
 import json
 from typing import Dict, List, Any, Optional, Tuple
@@ -331,6 +332,7 @@ def add_model(
         # If custom name provided, rename the model
         if model_name and model_name != default_model_name:
             try:
+                time.sleep(0.5)
                 renamed = model_mgr.RenameModel(
                     sim_name, default_model_name, model_name
                 ).Result
