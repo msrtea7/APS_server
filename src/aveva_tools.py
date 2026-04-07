@@ -536,36 +536,6 @@ def set_variable_value(
         return {"success": False, "error": str(e)}
 
 
-def get_simulation_models(sim_name: str = None) -> Dict[str, Any]:
-    """Tool: Get all models in the simulation"""
-    try:
-        if not aveva_conn.sc:
-            return {"success": False, "error": "Not connected to AVEVA"}
-
-        sim_name = sim_name or aveva_conn.current_simulation
-        if not sim_name:
-            return {"success": False, "error": "No simulation specified or open"}
-
-        diagram_mgr = aveva_conn.managers["diagram"]
-        models = diagram_mgr.GetModels(sim_name).Result
-
-        model_list = []
-        if models:
-            for model in models:
-                name = model["name"].ToString()
-                # Schema expects each model to be a dictionary, not a string
-                model_list.append({"name": name})
-
-        return {
-            "success": True,
-            "simulation": sim_name,
-            "models": model_list,
-            "count": len(model_list),
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
 def get_simulation_status(sim_name: str = None) -> Dict[str, Any]:
     """Tool: Get simulation convergence status"""
     try:
@@ -588,31 +558,6 @@ def get_simulation_status(sim_name: str = None) -> Dict[str, Any]:
             "status_summary": f"Data: {status[0]}, Specified: {status[1]}, Solved: {status[2]}"
             if len(status) >= 3
             else "Unknown",
-        }
-
-    except Exception as e:
-        return {"success": False, "error": str(e)}
-
-
-def take_snapshot(snapshot_name: str, sim_name: str = None) -> Dict[str, Any]:
-    """Tool: Take a snapshot of current simulation state"""
-    try:
-        if not aveva_conn.sc:
-            return {"success": False, "error": "Not connected to AVEVA"}
-
-        sim_name = sim_name or aveva_conn.current_simulation
-        if not sim_name:
-            return {"success": False, "error": "No simulation specified or open"}
-
-        snapshot_mgr = aveva_conn.managers["snapshot"]
-        # Implementation depends on exact API - this is a placeholder
-        # snapshot_mgr.TakeSnapshot(sim_name, snapshot_name).Result
-
-        return {
-            "success": True,
-            "snapshot_name": snapshot_name,
-            "simulation": sim_name,
-            "message": f"Snapshot '{snapshot_name}' taken for {sim_name}",
         }
 
     except Exception as e:
@@ -814,6 +759,83 @@ def show_connectors_on_flowsheet(sim_name: str = None) -> Dict[str, Any]:
             "connectors": connectors_info,
             "count": len(connectors_info),
             "message": f"Found {len(connectors_info)} connectors on flowsheet in simulation '{sim_name}'",
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
+def show_all_ports(sim_name: str = None) -> Dict[str, Any]:
+    """Tool: Get all port information for every model in the simulation."""
+    try:
+        if not aveva_conn.sc:
+            return {"success": False, "error": "Not connected to AVEVA"}
+
+        sim_name = sim_name or aveva_conn.current_simulation
+        if not sim_name:
+            return {"success": False, "error": "No simulation specified or open"}
+
+        sim_mgr = aveva_conn.managers["simulation"]
+
+        # Step 1: query all model names in the simulation
+        resource = Array[String]([sim_name])
+        model_child_types = Array[Object](
+            [convert({"type": "model", "fields": Array[String](["name"])})]
+        )
+        model_result = sim_mgr.Query("simulation", resource, model_child_types).Result
+
+        if not hasattr(model_result, "model") or not model_result.model:
+            return {"success": True, "simulation": sim_name, "models": [], "count": 0}
+
+        model_names = [
+            str(m.name) for m in model_result.model if hasattr(m, "name")
+        ]
+
+        # Step 2: for each model, query its ports
+        port_child_types = Array[Object](
+            [
+                convert(
+                    {
+                        "type": "port",
+                        "fields": Array[String](
+                            ["name", "fullname", "direction", "porttype", "ismultiple", "description"]
+                        ),
+                    }
+                )
+            ]
+        )
+
+        models_info = []
+        for model_name in model_names:
+            model_resource = Array[String]([sim_name, model_name])
+            try:
+                port_result = sim_mgr.Query(
+                    "simulation", model_resource, port_child_types
+                ).Result
+
+                ports = []
+                if hasattr(port_result, "port") and port_result.port:
+                    for port in port_result.port:
+                        ports.append(
+                            {
+                                "name": str(getattr(port, "name", "")),
+                                "fullname": str(getattr(port, "fullname", "")),
+                                "direction": str(getattr(port, "direction", "")),
+                                "porttype": str(getattr(port, "porttype", "")),
+                                "ismultiple": bool(getattr(port, "ismultiple", False)),
+                                "description": str(getattr(port, "description", "")),
+                            }
+                        )
+                models_info.append({"model": model_name, "ports": ports})
+            except Exception as e:
+                logger.warning(f"Error querying ports for model '{model_name}': {e}")
+                models_info.append({"model": model_name, "ports": [], "error": str(e)})
+
+        return {
+            "success": True,
+            "simulation": sim_name,
+            "models": models_info,
+            "count": len(models_info),
         }
 
     except Exception as e:

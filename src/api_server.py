@@ -39,8 +39,6 @@ from src.schemas import (
     # Fluids
     CreateFluidArgs,
     SetFluidOfSourceArgs,
-    # Snapshots
-    TakeSnapshotArgs,
     # Shared
     SimNameArgs,
     SimNameTimeoutArgs,
@@ -145,11 +143,6 @@ def rename_model(req: RenameModelArgs):
     )
 
 
-@app.post("/model/list")
-def get_simulation_models(req: SimNameArgs):
-    return aveva_tools.get_simulation_models(req.sim_name)
-
-
 @app.post("/model/params")
 def show_one_model_param(req: ModelNameArgs):
     return aveva_tools.show_one_model_param(req.sim_name, req.model_name)
@@ -171,6 +164,11 @@ def show_models_on_flowsheet(req: SimNameArgs):
 @app.post("/flowsheet/connectors")
 def show_connectors_on_flowsheet(req: SimNameArgs):
     return aveva_tools.show_connectors_on_flowsheet(req.sim_name)
+
+
+@app.post("/flowsheet/ports")
+def show_all_ports(req: SimNameArgs):
+    return aveva_tools.show_all_ports(req.sim_name)
 
 
 # ── Connector management ──────────────────────────────────────────────────
@@ -274,11 +272,6 @@ def create_snapshot(req: SimNameTimeoutArgs):
 @app.post("/snapshot/list")
 def get_all_snapshots(req: SimNameArgs):
     return aveva_tools.get_all_snapshots(req.sim_name)
-
-
-@app.post("/snapshot/take")
-def take_snapshot(req: TakeSnapshotArgs):
-    return aveva_tools.take_snapshot(req.snapshot_name, req.sim_name)
 
 
 if __name__ == "__main__":
